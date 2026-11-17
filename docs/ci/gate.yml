@@ -1,0 +1,39 @@
+name: gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend
+        run: pip install -e .
+
+      - name: Install frontend
+        run: npm --prefix apps/web ci
+
+      - name: Bootstrap samples
+        run: python scripts/bootstrap_samples.py
+
+      - name: Invariant tests
+        run: python -m pytest tests -q
+
+      - name: Fault injection
+        run: python scripts/fault_injection.py
+
+      - name: Gate (compile + eval + smoke; docker/e2e 由本地或定期任务执行)
+        env:
+          PYTHONPATH: .
+        run: python scripts/gate.py --skip-docker --skip-e2e
