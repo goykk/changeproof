@@ -300,13 +300,17 @@ def _eval_metric_assertions() -> str:
     return ""
 
 
-def _step_eval(refresh: bool) -> StepOutcome:
+def _step_eval(refresh: bool, assert_metrics: bool = True) -> StepOutcome:
     command = [_python(), "scripts/run_eval.py"]
     if refresh:
         command.append("--refresh")
     returncode, output = _run(command, log_rel="eval.log", timeout=1800)
     if returncode != 0:
         return FAIL, " ".join(command), "var/gate/eval.log", _tail(output)
+    if not assert_metrics:
+        # 指标受覆盖率上下文/生成验证环境影响（Linux CI 与本地不一致），
+        # 由本地或定期任务执行断言，CI 只保证评测可运行。
+        return PASS, " ".join(command), "var/gate/eval.log", "指标断言已跳过（--skip-eval-assertions）"
     assertion_error = _eval_metric_assertions()
     if assertion_error:
         return FAIL, " ".join(command), "var/gate/eval.log", assertion_error
@@ -445,6 +449,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--skip-docker", action="store_true", help="跳过 docker-runner 步骤")
     parser.add_argument("--skip-e2e", action="store_true", help="跳过浏览器 E2E 步骤")
     parser.add_argument("--refresh", action="store_true", help="忽略评测样本缓存，透传 run_eval.py")
+    parser.add_argument(
+        "--skip-eval-assertions",
+        action="store_true",
+        help="跳过评测指标断言（环境相关；CI 使用，断言由本地或定期任务执行）",
+    )
     args = parser.parse_args(argv)
 
     GATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -453,7 +462,7 @@ def main(argv: list[str] | None = None) -> int:
 
     steps: list[StepResult] = [
         _execute("compile", _step_compile),
-        _execute("eval", lambda: _step_eval(args.refresh)),
+        _execute("eval", lambda: _step_eval(args.refresh, not args.skip_eval_assertions)),
         _execute("smoke", _step_smoke),
     ]
     if args.skip_e2e:
