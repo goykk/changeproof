@@ -1,0 +1,23 @@
+{
+  "sample_id": "rename_function_price_of",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/rename_function_price_of",
+  "change_kind": "rename_function",
+  "expected_impact_files": [
+    "app/services/catalog.py",
+    "app/api/products.py"
+  ],
+  "expected_impact_symbols": [
+    "app/services/catalog.py::ProductService.price_of"
+  ],
+  "expected_failing_tests": [
+    "tests/test_services_catalog.py::test_price_of",
+    "tests/test_services_catalog.py::test_price_of_unknown"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

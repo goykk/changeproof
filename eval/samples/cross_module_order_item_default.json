@@ -1,0 +1,22 @@
+{
+  "sample_id": "cross_module_order_item_default",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/cross_module_order_item_default",
+  "change_kind": "cross_module",
+  "expected_impact_files": [
+    "app/models.py",
+    "app/services/order.py"
+  ],
+  "expected_impact_symbols": [
+    "app/models.py::OrderItem.quantity"
+  ],
+  "expected_failing_tests": [
+    "tests/test_models.py::test_order_item_quantity_default"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "shop_api": {
+    "shop_api_rename_q1": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "e2645ea814936deb8b2293651c1b4b15de6b2a05"
+    },
+    "rename_field_product_price": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "efa382cff67754f5924e4bf4c8bd27eb4d5832ab"
+    },
+    "rename_field_order_coupon_code": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "e7e4fadcb3726def8872e5ae4ea44924b1cca51b"
+    },
+    "rename_field_api_price_key": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "d1377e111dcd8dfb50502f63c39db3043a3f577f"
+    },
+    "rename_field_customer_email": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "dd39da9b2bfd5e733cebc25c8a48f3d5a68a16d0"
+    },
+    "rename_function_price_of": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "43ad4d8305421c03efd68fa6b976bee8968167bd"
+    },
+    "rename_function_order_discount": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "40f6ee89b677dc61a31acc317329963b0d9ab04a"
+    },
+    "rename_function_customer_discount_rate": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "3bd0e80e695801be775c6865934617717a1c00f4"
+    },
+    "rename_function_inventory_reserve": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "2a7651cb1d8b2e328ad82995ab6b8c5257814bfc"
+    },
+    "rename_function_coupon_deactivate": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "98a85ba12d317aa4b29693403b8738b68fa553b9"
+    },
+    "signature_change_apply_tax_floor": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "2784ba30218aa070e6897812d79b56659982411a"
+    },
+    "signature_change_checkout_tax_rate": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "2fc0b2eb8076efcda2e79130e2b5ef1ca595450e"
+    },
+    "signature_change_customer_register_tier": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "ffc660d025358735f6bc18aae52cf6b1b1216954"
+    },
+    "signature_change_split_amount_mode": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "0a38e719eb104fdd6624a66538ed6149f067ae4c"
+    },
+    "signature_change_coupon_rate_kwonly": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "5827e781a6ec510dc8186f938a6cba83e55151a6"
+    },
+    "route_param_product_detail_path": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "805e26b1b708cc103cffc209fdcb162e05280788"
+    },
+    "route_param_order_by_id_prefix": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "38ff3fd459be96e94f8bcfc135718c53aeadba41"
+    },
+    "route_param_order_shipping_prefix": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "b1382989d5a5c849262804bca95600929ebe307f"
+    },
+    "route_param_customer_query_email": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "abe72295002748e2c4032767664ddf88da3454b2"
+    },
+    "route_param_health_version_query": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "6ca7a78a2c1424359c25f7371ee97bd54935cd6c"
+    },
+    "shared_util_round_money_precision": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "325935111dc37c1f961643b85824f32a34cd3b4d"
+    },
+    "shared_util_validate_quantity_cap": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "b0eb28a38c91702a7fc9322df8c3aaff039c5078"
+    },
+    "shared_util_shipping_fee_amount": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "619b2433d5ad31a032ddd17ad4c9971576a36e1a"
+    },
+    "shared_util_coupon_rate_cap": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "7e3796ffde25364f6b1b8aacba8166b5067b7e7c"
+    },
+    "shared_util_tier_discount_table": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "76677cc015e7b395d4c0a518ba4634615ae84f41"
+    },
+    "config_tax_rate_default": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "65929d465f2272856d92ef47b1cbbef7173fc24c"
+    },
+    "config_free_shipping_threshold": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "1b1bc835a2a63dec9e7f5ed9b133b074636b1f9b"
+    },
+    "config_default_currency": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "daac0922911803bf6ea1bb647256d7f363bbad70"
+    },
+    "config_currency_env_name": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "7c1db0704040551bb661d2f7f3d1a0f1f4b248f8"
+    },
+    "config_settings_tax_override": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "d13c266b19173471a2cbdbaf471b0463785bc702"
+    },
+    "comment_only_pricing_docstring": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "38becc2d9e788c790a63790aaa2a9a9c4e822542"
+    },
+    "comment_only_order_comment": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "52f1d21501358b4dd947c179b9f99a1077bc8eea"
+    },
+    "comment_only_catalog_docstring": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "2ce3af62d9672f5b53ba0ddab4efd6e1056c47a8"
+    },
+    "comment_only_config_comment": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "501b2a8bbe1a1642d72e699437fc5273ec8c9b3d"
+    },
+    "comment_only_money_docstrings": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "819841d095b0e3440e9ef0865c7ad1781074b266"
+    },
+    "cross_module_checkout_breakdown": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "ed9b5915fdb5f24eddcb7a845c75fd83d87e787c"
+    },
+    "cross_module_checkout_currency": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "5ace395a7457c6c5e842225154d0b0308ec5ca7a"
+    },
+    "cross_module_service_fee_line": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "2bece242df0f710bf3e0d277ec6afada7f8b15f8"
+    },
+    "cross_module_order_item_default": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "e3c393784446bdebf405fe1d07557b1d1d100d24"
+    },
+    "cross_module_amount_format_health": {
+      "base_sha": "7f448040637953a283823636a290141306e48814",
+      "target_sha": "c7466240aff62f27ce3c9cc048c7a1098d587b87"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "sample_id": "blog_rename_post_title",
+  "repo_name": "blog_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/blog_rename_post_title",
+  "change_kind": "rename_field",
+  "expected_impact_files": [
+    "src/blog/models.py",
+    "src/blog/services/posts.py",
+    "src/blog/api/posts.py"
+  ],
+  "expected_impact_symbols": [],
+  "expected_failing_tests": [
+    "tests/test_api.py::test_get_post",
+    "tests/test_api.py::test_list_posts",
+    "tests/test_models.py::test_post_author_relationship",
+    "tests/test_models.py::test_post_title",
+    "tests/test_services.py::test_excerpt",
+    "tests/test_services.py::test_list_posts",
+    "tests/test_services.py::test_title_of"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "src/blog/core/**"
+  ]
+}

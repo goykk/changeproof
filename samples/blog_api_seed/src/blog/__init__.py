@@ -1,0 +1,1 @@
+"""Blog API 示例包（包式布局，与 shop_api 的 app/ 布局不同）。"""

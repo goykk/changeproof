@@ -1,0 +1,22 @@
+{
+  "sample_id": "cross_module_checkout_breakdown",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/cross_module_checkout_breakdown",
+  "change_kind": "cross_module",
+  "expected_impact_files": [
+    "app/services/order.py",
+    "app/api/orders.py"
+  ],
+  "expected_impact_symbols": [
+    "app/services/order.py::OrderService.checkout"
+  ],
+  "expected_failing_tests": [
+    "tests/test_api_orders.py::test_get_order_total"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

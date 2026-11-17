@@ -1,0 +1,25 @@
+{
+  "sample_id": "config_default_currency",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/config_default_currency",
+  "change_kind": "config",
+  "expected_impact_files": [
+    "app/config.py",
+    "app/core/money.py",
+    "app/api/health.py"
+  ],
+  "expected_impact_symbols": [
+    "app/config.py::DEFAULT_CURRENCY"
+  ],
+  "expected_failing_tests": [
+    "tests/test_config.py::test_default_settings",
+    "tests/test_core_money.py::test_format_amount",
+    "tests/test_api_health.py::test_health_ok"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

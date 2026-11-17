@@ -1,0 +1,26 @@
+{
+  "sample_id": "shared_util_shipping_fee_amount",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/shared_util_shipping_fee_amount",
+  "change_kind": "shared_util",
+  "expected_impact_files": [
+    "app/core/pricing.py",
+    "app/services/order.py"
+  ],
+  "expected_impact_symbols": [
+    "app/core/pricing.py::shipping_fee"
+  ],
+  "expected_failing_tests": [
+    "tests/test_core_pricing.py::test_shipping_fee_paid",
+    "tests/test_orders.py::test_shipping_threshold_boundary",
+    "tests/test_orders.py::test_shipping_paid",
+    "tests/test_api_orders.py::test_get_order_shipping",
+    "tests/test_api_orders.py::test_get_order_total"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "sample_id": "route_param_order_by_id_prefix",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/route_param_order_by_id_prefix",
+  "change_kind": "route_param",
+  "expected_impact_files": [
+    "app/api/orders.py"
+  ],
+  "expected_impact_symbols": [
+    "app/api/orders.py::get_order"
+  ],
+  "expected_failing_tests": [
+    "tests/test_orders.py::test_order_list",
+    "tests/test_api_orders.py::test_get_order_total"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

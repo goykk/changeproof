@@ -1,0 +1,22 @@
+{
+  "sample_id": "shared_util_round_money_precision",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/shared_util_round_money_precision",
+  "change_kind": "shared_util",
+  "expected_impact_files": [
+    "app/core/money.py"
+  ],
+  "expected_impact_symbols": [
+    "app/core/money.py::round_money"
+  ],
+  "expected_failing_tests": [
+    "tests/test_core_money.py::test_round_money",
+    "tests/test_core_money.py::test_parse_amount"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

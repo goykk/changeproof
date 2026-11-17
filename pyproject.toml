@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "changeproof"
+version = "0.1.0"
+description = "ChangeProof：变更影响分析与测试选择平台"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "sqlalchemy>=2.0",
+    "gitpython>=3.1",
+    "pydantic>=2.6",
+    "httpx>=0.27",
+    "pytest>=8.0",
+    "coverage>=7.4",
+]
+
+[tool.setuptools.packages.find]
+include = ["core*", "services*"]
+namespaces = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

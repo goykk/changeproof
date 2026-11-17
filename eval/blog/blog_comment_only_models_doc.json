@@ -1,0 +1,14 @@
+{
+  "sample_id": "blog_comment_only_models_doc",
+  "repo_name": "blog_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/blog_comment_only_models_doc",
+  "change_kind": "comment_only",
+  "expected_impact_files": [],
+  "expected_impact_symbols": [],
+  "expected_failing_tests": [],
+  "expected_no_behavior_change": true,
+  "high_risk_globs": [
+    "src/blog/core/**"
+  ]
+}

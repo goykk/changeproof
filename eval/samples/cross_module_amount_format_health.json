@@ -1,0 +1,23 @@
+{
+  "sample_id": "cross_module_amount_format_health",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/cross_module_amount_format_health",
+  "change_kind": "cross_module",
+  "expected_impact_files": [
+    "app/core/money.py",
+    "app/api/health.py"
+  ],
+  "expected_impact_symbols": [
+    "app/core/money.py::format_amount"
+  ],
+  "expected_failing_tests": [
+    "tests/test_core_money.py::test_format_amount",
+    "tests/test_api_health.py::test_health_ok"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

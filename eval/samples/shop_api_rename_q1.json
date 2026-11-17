@@ -1,0 +1,24 @@
+{
+  "sample_id": "shop_api_rename_q1",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/shop_api_rename_q1",
+  "change_kind": "rename_field",
+  "expected_impact_files": [
+    "app/models.py",
+    "app/services/order.py",
+    "app/api/orders.py"
+  ],
+  "expected_impact_symbols": [
+    "app/models.py::Order.total",
+    "app/services/order.py::OrderService.calculate_total"
+  ],
+  "expected_failing_tests": [
+    "tests/test_orders.py::test_order_total"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "sample_id": "comment_only_config_comment",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/comment_only_config_comment",
+  "change_kind": "comment_only",
+  "expected_impact_files": [],
+  "expected_impact_symbols": [],
+  "expected_failing_tests": [],
+  "expected_no_behavior_change": true,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

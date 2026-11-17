@@ -1,0 +1,58 @@
+# ChangeProof 可选 Docker 部署路径。默认只启动 api；postgres / minio 属于可选服务，
+# 只有显式加 --profile optional 才会被创建。本机 Docker daemon 不可用时请走本地路径
+# （见 infra/README.md 的“回退方式”），Docker 不是主链路依赖。
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    image: changeproof-api:latest
+    ports:
+      - "8000:8000"
+    environment:
+      CHANGEPROOF_DB_URL: sqlite:////app/var/changeproof.db
+      CHANGEPROOF_ARTIFACTS_ROOT: /app/var/artifacts
+      CHANGEPROOF_LLM: mock
+      CHANGEPROOF_OLLAMA_BASE_URL: http://host.docker.internal:11434
+      CHANGEPROOF_OLLAMA_MODEL: llama3.1
+    volumes:
+      - ../var:/app/var
+      - ../var/samples:/samples
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    profiles:
+      - optional
+    environment:
+      POSTGRES_USER: changeproof
+      POSTGRES_PASSWORD: changeproof
+      POSTGRES_DB: changeproof
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    profiles:
+      - optional
+    command:
+      - server
+      - /data
+      - --console-address
+      - ":9001"
+    environment:
+      MINIO_ROOT_USER: changeproof
+      MINIO_ROOT_PASSWORD: changeproof-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  minio-data:

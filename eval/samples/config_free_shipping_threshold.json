@@ -1,0 +1,23 @@
+{
+  "sample_id": "config_free_shipping_threshold",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/config_free_shipping_threshold",
+  "change_kind": "config",
+  "expected_impact_files": [
+    "app/config.py",
+    "app/services/order.py"
+  ],
+  "expected_impact_symbols": [
+    "app/config.py::FREE_SHIPPING_THRESHOLD"
+  ],
+  "expected_failing_tests": [
+    "tests/test_config.py::test_default_settings",
+    "tests/test_orders.py::test_shipping_threshold_boundary"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

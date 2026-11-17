@@ -1,0 +1,22 @@
+{
+  "sample_id": "signature_change_apply_tax_floor",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/signature_change_apply_tax_floor",
+  "change_kind": "signature_change",
+  "expected_impact_files": [
+    "app/core/pricing.py",
+    "app/services/order.py"
+  ],
+  "expected_impact_symbols": [
+    "app/core/pricing.py::apply_tax"
+  ],
+  "expected_failing_tests": [
+    "tests/test_core_pricing.py::test_apply_tax"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

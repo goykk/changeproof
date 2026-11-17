@@ -1,0 +1,22 @@
+{
+  "sample_id": "rename_function_customer_discount_rate",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/rename_function_customer_discount_rate",
+  "change_kind": "rename_function",
+  "expected_impact_files": [
+    "app/services/customers.py",
+    "app/api/customers.py"
+  ],
+  "expected_impact_symbols": [
+    "app/services/customers.py::CustomerService.discount_rate"
+  ],
+  "expected_failing_tests": [
+    "tests/test_services_customers.py::test_discount_rate_by_tier"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

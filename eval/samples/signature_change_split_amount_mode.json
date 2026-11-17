@@ -1,0 +1,21 @@
+{
+  "sample_id": "signature_change_split_amount_mode",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/signature_change_split_amount_mode",
+  "change_kind": "signature_change",
+  "expected_impact_files": [
+    "app/core/money.py"
+  ],
+  "expected_impact_symbols": [
+    "app/core/money.py::split_amount"
+  ],
+  "expected_failing_tests": [
+    "tests/test_core_money.py::test_split_amount"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

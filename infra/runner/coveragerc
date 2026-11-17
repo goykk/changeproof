@@ -1,0 +1,5 @@
+# runner 镜像默认的 coverage 配置：让 coverage JSON 输出每个行的测试上下文
+# （由 --cov-context=test 产生，context 为 pytest node id）
+# 通过 COVERAGE_RCFILE 生效；job 命令可用 --cov-config 指定别的配置文件覆盖它
+[json]
+show_contexts = True

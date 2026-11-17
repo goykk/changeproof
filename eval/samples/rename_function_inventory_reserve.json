@@ -1,0 +1,24 @@
+{
+  "sample_id": "rename_function_inventory_reserve",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/rename_function_inventory_reserve",
+  "change_kind": "rename_function",
+  "expected_impact_files": [
+    "app/services/inventory.py",
+    "app/api/products.py"
+  ],
+  "expected_impact_symbols": [
+    "app/services/inventory.py::InventoryService.reserve"
+  ],
+  "expected_failing_tests": [
+    "tests/test_services_inventory.py::test_reserve",
+    "tests/test_services_inventory.py::test_reserve_insufficient",
+    "tests/test_api_products.py::test_reserve_stock"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

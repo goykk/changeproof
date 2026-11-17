@@ -1,0 +1,19 @@
+{
+  "sample_id": "blog_shared_slugify_underscore",
+  "repo_name": "blog_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/blog_shared_slugify_underscore",
+  "change_kind": "shared_util",
+  "expected_impact_files": [
+    "src/blog/core/text.py",
+    "src/blog/api/posts.py"
+  ],
+  "expected_impact_symbols": [],
+  "expected_failing_tests": [
+    "tests/test_core_text.py::test_slugify"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "src/blog/core/**"
+  ]
+}

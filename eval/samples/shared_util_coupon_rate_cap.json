@@ -1,0 +1,21 @@
+{
+  "sample_id": "shared_util_coupon_rate_cap",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/shared_util_coupon_rate_cap",
+  "change_kind": "shared_util",
+  "expected_impact_files": [
+    "app/services/coupons.py"
+  ],
+  "expected_impact_symbols": [
+    "app/services/coupons.py::CouponService.rate_for"
+  ],
+  "expected_failing_tests": [
+    "tests/test_services_coupons.py::test_rate_for_active"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}

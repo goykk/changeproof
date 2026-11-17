@@ -1,0 +1,22 @@
+{
+  "sample_id": "rename_field_api_price_key",
+  "repo_name": "shop_api",
+  "repo_path_marker": "var/samples/shop_api",
+  "base_ref": "v1-baseline",
+  "target_ref": "sample/rename_field_api_price_key",
+  "change_kind": "rename_field",
+  "expected_impact_files": [
+    "app/api/products.py"
+  ],
+  "expected_impact_symbols": [
+    "app/api/products.py::list_products"
+  ],
+  "expected_failing_tests": [
+    "tests/test_api_products.py::test_list_products",
+    "tests/test_api_products.py::test_get_product"
+  ],
+  "expected_no_behavior_change": false,
+  "high_risk_globs": [
+    "app/core/**"
+  ]
+}
