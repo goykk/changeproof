@@ -2,11 +2,22 @@
 
 import cytoscape from "cytoscape";
 import { useEffect, useRef, useState } from "react";
-import { Badge } from "@/components/ui";
 import type { GraphNodeOut, GraphOut } from "@/lib/types";
 
 const STATIC_SOURCES = new Set(["ast", "framework", "git_history"]);
 const DYNAMIC_SOURCES = new Set(["coverage", "execution"]);
+
+const EDGE_LABELS: Record<string, string> = {
+  routes_to: "路由",
+  calls: "调用",
+  imports: "导入",
+  defines: "定义",
+  reads: "读取",
+  writes: "写入",
+  references: "引用",
+  tests: "测试",
+  related: "关联",
+};
 
 function nodeClass(source: string): string {
   if (STATIC_SOURCES.has(source)) return "source-static";
@@ -22,6 +33,16 @@ function edgeClass(source: string): string {
   return "edge-neutral";
 }
 
+function shortLabel(value: string): string {
+  const base = value.split("/").pop() ?? value;
+  const concise = base.replace(/\.py$/, "").replace(/^test_/, "");
+  return concise.length > 12 ? `${concise.slice(0, 11)}…` : concise;
+}
+
+function edgeLabel(edgeType: string): string {
+  return EDGE_LABELS[edgeType] ?? edgeType;
+}
+
 type SelectedNode = Pick<GraphNodeOut, "label" | "kind" | "file_path" | "line_start" | "analysis_source">;
 
 const STYLES: cytoscape.StylesheetJson = [
@@ -30,13 +51,13 @@ const STYLES: cytoscape.StylesheetJson = [
     style: {
       label: "data(label)",
       "text-wrap": "wrap",
-      "text-max-width": "110",
-      "font-size": 8,
+      "text-max-width": "70",
+      "font-size": 11,
       "text-valign": "center",
       "text-halign": "center",
-      width: 36,
-      height: 36,
-      "border-width": 2,
+      width: 80,
+      height: 80,
+      "border-width": 2.5,
       "border-color": "#cbd5e1",
       "background-color": "#f1f5f9",
       color: "#0f172a",
@@ -71,23 +92,25 @@ const STYLES: cytoscape.StylesheetJson = [
   {
     selector: "edge",
     style: {
-      width: 1,
+      width: 2.2,
       "line-color": "#cbd5e1",
       "target-arrow-color": "#cbd5e1",
       "target-arrow-shape": "triangle",
-      "curve-style": "bezier",
+      "arrow-scale": 2,
+      "curve-style": "straight",
       label: "data(label)",
-      "font-size": 6,
-      color: "#64748b",
-      "text-rotation": "autorotate",
+      "font-size": 11,
+      color: "#1e293b",
+      "text-rotation": "none",
       "text-background-color": "#ffffff",
-      "text-background-opacity": 0.85,
+      "text-background-opacity": 0.92,
+      "text-background-padding": "1px",
     },
   },
-  { selector: "edge.edge-static", style: { "line-color": "#93c5fd", "target-arrow-color": "#93c5fd" } },
-  { selector: "edge.edge-dynamic", style: { "line-color": "#86efac", "target-arrow-color": "#86efac" } },
-  { selector: "edge.edge-model", style: { "line-color": "#fdba74", "target-arrow-color": "#fdba74" } },
-  { selector: "edge.edge-neutral", style: { "line-color": "#cbd5e1", "target-arrow-color": "#cbd5e1" } },
+  { selector: "edge.edge-static", style: { "line-color": "#60a5fa", "target-arrow-color": "#1d4ed8" } },
+  { selector: "edge.edge-dynamic", style: { "line-color": "#4ade80", "target-arrow-color": "#15803d" } },
+  { selector: "edge.edge-model", style: { "line-color": "#fb923c", "target-arrow-color": "#c2410c" } },
+  { selector: "edge.edge-neutral", style: { "line-color": "#94a3b8", "target-arrow-color": "#475569" } },
 ];
 
 export function ImpactGraph({
@@ -105,13 +128,14 @@ export function ImpactGraph({
   const [selected, setSelected] = useState<SelectedNode | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current || !graph) return;
+    if (!containerRef.current || !graph || graph.nodes.length === 0) return;
 
     const elements = [
       ...graph.nodes.map((node) => ({
         data: {
           id: node.id,
-          label: node.analysis_source === "model" ? `建议 · ${node.label}` : node.label,
+          label: shortLabel(node.label),
+          full_label: node.label,
           kind: node.kind,
           file_path: node.file_path,
           line_start: node.line_start,
@@ -124,7 +148,8 @@ export function ImpactGraph({
           id: `e${index}:${edge.source}->${edge.target}`,
           source: edge.source,
           target: edge.target,
-          label: `${edge.edge_type} · ${edge.analysis_source}`,
+          label: edgeLabel(edge.edge_type),
+          label_offset: ((index % 5) - 2) * 7,
           edge_type: edge.edge_type,
           analysis_source: edge.analysis_source,
           confidence: edge.confidence,
@@ -139,27 +164,79 @@ export function ImpactGraph({
       container: containerRef.current,
       elements,
       style: STYLES,
-      layout: { name: "cose", animate: false, padding: 24, nodeRepulsion: () => 8000 },
+      layout: {
+        name: "cose",
+        animate: false,
+        fit: false,
+        padding: 18,
+        nodeRepulsion: () => 7000,
+        idealEdgeLength: () => 64,
+        edgeElasticity: () => 100,
+        componentSpacing: 18,
+        nodeOverlap: 12,
+        gravity: 0.9,
+      },
       wheelSensitivity: 0.15,
     });
+
+    cy.edges().forEach((edge) => {
+      edge.style({ "text-margin-y": Number(edge.data("label_offset") ?? 0) });
+    });
+    const centerNode = cy.nodes().sort((a, b) => b.degree() - a.degree()).first() as cytoscape.NodeSingular;
+    centerNode.select();
+    cy.zoom(1);
+    cy.center(centerNode);
+
+    const showConnectedLabels = (node: cytoscape.NodeSingular) => {
+      cy.edges().style({ opacity: 1, width: 2.2, "font-size": 11 });
+      node.connectedEdges().style({ opacity: 1, width: 3, "font-size": 12 });
+    };
 
     cy.on("select unselect", "node", () => {
       const selection = cy.$("node:selected");
       if (selection.length === 0) {
+        cy.edges().style({ opacity: 1, width: 2.2, "font-size": 11 });
         setSelected(null);
         return;
       }
       const data = selection[0].data();
       setSelected({
-        label: String(data.label ?? ""),
+        label: String(data.full_label ?? data.label ?? ""),
         kind: String(data.kind ?? ""),
         file_path: String(data.file_path ?? ""),
         line_start: Number(data.line_start ?? 0),
         analysis_source: String(data.analysis_source ?? ""),
       });
+      showConnectedLabels(selection[0] as cytoscape.NodeSingular);
     });
 
+    cy.on("mouseover", "edge", (event) => {
+      event.target.style({ opacity: 1, width: 3.2, "font-size": 13 });
+    });
+
+    cy.on("mouseout", "edge", () => {
+      const selection = cy.$("node:selected");
+      if (selection.length === 0) {
+        cy.edges().style({ opacity: 1, width: 2.2, "font-size": 11 });
+        return;
+      }
+      cy.edges().style({ opacity: 1, width: 2.2, "font-size": 11 });
+      selection.connectedEdges().style({ opacity: 1, width: 3, "font-size": 12 });
+    });
+
+    const resize = () => {
+      cy.resize();
+      const selection = cy.$("node:selected");
+      if (selection.length > 0) {
+        cy.center(selection.first() as cytoscape.NodeSingular);
+      } else {
+        cy.center();
+      }
+    };
+    window.addEventListener("resize", resize);
+
     return () => {
+      window.removeEventListener("resize", resize);
       cy.destroy();
     };
   }, [graph]);
@@ -170,53 +247,45 @@ export function ImpactGraph({
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-        <Badge tone="blue">静态事实 {staticCount}</Badge>
-        <Badge tone="green">动态事实 {dynamicCount}</Badge>
-        <Badge tone="orange">模型建议 {modelCount}</Badge>
-        <span>层级上限 {maxDepth}</span>
-        <span>节点 {graph?.nodes.length ?? 0} · 边 {graph?.edges.length ?? 0}</span>
-      </div>
-
       {truncated && (
-        <div className="mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          影响结果已截断：仅展示当前层级上限（{maxDepth}）内的部分节点，结论不完整。
-        </div>
-      )}
-      {!truncated && complete && (
-        <div className="mb-3 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-          影响传播已完整收敛。
+        <div className="mb-3 border-l-2 border-amber-500 bg-amber-50 px-3 py-2 text-[11px] leading-5 text-amber-800">
+          结果已截断，仅展示当前层级内的部分节点。
         </div>
       )}
 
       {!graph || graph.nodes.length === 0 ? (
-        <p className="text-sm text-slate-500">暂无影响图数据。</p>
+        <p className="text-[12px] text-slate-500">暂无影响图数据。</p>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
-          <div ref={containerRef} className="h-[480px] w-full rounded-md border border-slate-200 bg-slate-50" />
-          <aside className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+        <div className="grid gap-3 md:grid-cols-[1fr_200px]">
+          <div ref={containerRef} className="h-[400px] w-full rounded-[4px] border border-slate-200 bg-[#fbfcfd]" />
+          <aside className="overflow-y-auto rounded-[4px] border border-slate-200 bg-white px-3 py-2.5 text-[11px]">
+            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-500">
+              <span className="inline-flex items-center gap-1"><span className="h-2 w-2 bg-blue-600" />静态 {staticCount}</span>
+              <span className="inline-flex items-center gap-1"><span className="h-2 w-2 bg-emerald-600" />动态 {dynamicCount}</span>
+              <span className="inline-flex items-center gap-1"><span className="h-2 w-2 bg-orange-500" />建议 {modelCount}</span>
+            </div>
             {selected ? (
-              <div className="space-y-2">
-                <div className="font-semibold text-slate-900">{selected.label}</div>
-                <div className="flex items-center gap-2">
-                  <Badge tone="neutral">{selected.kind}</Badge>
-                  <Badge tone={nodeClass(selected.analysis_source) === "source-model" ? "orange" : "blue"}>
-                    {selected.analysis_source}
-                  </Badge>
-                  {selected.analysis_source === "model" && <Badge tone="orange">建议</Badge>}
+              <div>
+                <div className="break-all font-medium text-slate-900">{selected.label}</div>
+                <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[10px] text-slate-500">
+                  <span>{selected.kind}</span>
+                  <span>{selected.analysis_source}</span>
+                  {selected.analysis_source === "model" && <span className="text-amber-700">建议</span>}
                 </div>
-                <div className="font-mono text-xs text-slate-700">
+                <div className="cp-mono mt-2 break-all text-[10px] leading-5 text-slate-600">
                   {selected.file_path}:{selected.line_start}
                 </div>
               </div>
             ) : (
-              <p className="text-slate-500">点击节点查看代码位置与事实来源。</p>
+              <p className="text-slate-500">点击节点，或悬停箭头，查看对应的箭头注释。</p>
             )}
-            <div className="mt-4 space-y-1 border-t border-slate-200 pt-3 text-xs text-slate-500">
-              <p>蓝 = 静态事实（ast / framework / git_history）</p>
-              <p>绿 = 动态事实（coverage / execution）</p>
-              <p>橙 = 模型建议（带“建议”徽标）</p>
-              <p>边标签 = 边类型 · 事实来源</p>
+            <div className="mt-3 space-y-1 border-t border-slate-100 pt-2 text-[10px] leading-5 text-slate-500">
+              <p>蓝：静态事实</p>
+              <p>绿：动态事实</p>
+              <p>橙：模型建议</p>
+              <p>箭头注释 = 关系类型</p>
+              <p>拖动平移 · 滚轮缩放</p>
+              <p className="cp-mono pt-1">节点 {graph.nodes.length} · 边 {graph.edges.length} · 注释 {graph.edges.length} · 层级 {maxDepth}</p>
             </div>
           </aside>
         </div>

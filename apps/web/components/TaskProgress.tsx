@@ -29,6 +29,13 @@ const STAGE_LABELS: Record<string, string> = {
   failed: "失败",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  created: "已创建",
+  running: "执行中",
+  reported: "已完成",
+  failed: "失败",
+};
+
 function statusTone(status: string): "neutral" | "blue" | "green" | "red" {
   if (status === "reported") return "green";
   if (status === "failed") return "red";
@@ -62,35 +69,39 @@ export function TaskProgress({
   const finished = task.status === "reported" || task.status === "failed";
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge tone={statusTone(task.status)}>{task.status}</Badge>
-        <Badge tone="neutral">{STAGE_LABELS[task.stage] ?? task.stage}</Badge>
-        <span className="text-xs text-slate-500">重试次数 {task.retry_count}</span>
-        {!finished && <Spinner label="轮询中（2000ms）" />}
+    <div className="space-y-2.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <Badge tone={statusTone(task.status)}>{STATUS_LABELS[task.status] ?? task.status}</Badge>
+        {task.status !== "reported" && (
+          <span className="text-[11px] font-medium text-slate-700">{STAGE_LABELS[task.stage] ?? task.stage}</span>
+        )}
+        {task.status !== "reported" && (
+          <span className="cp-mono text-[10px] text-slate-400">阶段 {Math.max(0, STAGES.indexOf(task.stage) + 1)}/{STAGES.length}</span>
+        )}
+        {task.retry_count > 0 && <span className="text-[10px] text-slate-400">重试 {task.retry_count}</span>}
+        {!finished && <Spinner label="运行中" />}
         {task.report_available && (
-          <Link href={`/changesets/${changesetId}/report`} className="text-sm text-blue-600 hover:underline">
+          <Link href={`/changesets/${changesetId}/report`} className="text-[11px] text-blue-700 hover:underline">
             查看证据报告
           </Link>
         )}
       </div>
 
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-        <div
-          className={`h-full rounded-full transition-all ${task.status === "failed" ? "bg-red-500" : "bg-blue-500"}`}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
+      {!finished && (
+        <div className="h-[3px] w-full bg-slate-200">
+          <div className="h-full bg-slate-800" style={{ width: `${percent}%` }} />
+        </div>
+      )}
 
       {(task.error_code || task.error_message) && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          <span className="font-mono text-xs font-semibold">{task.error_code ?? "error"}</span>
+        <div className="border-l-2 border-red-500 bg-red-50 px-3 py-2 text-[11px] leading-5 text-red-800">
+          <span className="cp-mono text-[10px] font-semibold">{task.error_code ?? "error"}</span>
           {task.error_message && <span className="ml-2">{task.error_message}</span>}
         </div>
       )}
 
       {task.status === "failed" && onRetry && (
-        <Button variant="secondary" onClick={onRetry} disabled={retrying}>
+        <Button variant="secondary" size="sm" onClick={onRetry} disabled={retrying}>
           {retrying ? "重试中…" : "重试分析"}
         </Button>
       )}

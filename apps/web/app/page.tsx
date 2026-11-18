@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Card, ErrorBanner, Spinner } from "@/components/ui";
+import { Button, ErrorBanner, PageHeader, Spinner, Status } from "@/components/ui";
 import { ApiError, createChangeset, createRepo, listCommits, listRepos } from "@/lib/api";
 import type { CommitOut, RepositoryOut } from "@/lib/types";
 
@@ -19,12 +19,29 @@ function defaultRepoName(localPath: string): string {
   return segments[segments.length - 1] ?? "repo";
 }
 
+function shortSha(sha: string): string {
+  return sha.slice(0, 7);
+}
+
+function formatCommitTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 export default function HomePage() {
   const router = useRouter();
 
   const [repos, setRepos] = useState<RepositoryOut[]>([]);
   const [reposLoading, setReposLoading] = useState(true);
   const [error, setError] = useState<Banner | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [localPath, setLocalPath] = useState("");
@@ -53,6 +70,10 @@ export default function HomePage() {
   useEffect(() => {
     void refreshRepos();
   }, [refreshRepos]);
+
+  useEffect(() => {
+    if (!reposLoading && repos.length === 0) setImportOpen(true);
+  }, [repos.length, reposLoading]);
 
   useEffect(() => {
     if (!repoId) {
@@ -92,6 +113,7 @@ export default function HomePage() {
       setLocalPath("");
       await refreshRepos();
       setRepoId(repo.repo_id);
+      setImportOpen(false);
     } catch (caught) {
       setError(toBanner(caught));
     } finally {
@@ -113,134 +135,265 @@ export default function HomePage() {
     }
   }
 
-  const canCreate = Boolean(repoId && baseSha && targetSha && baseSha !== targetSha) && !creating;
+  function handleSwap() {
+    setBaseSha(targetSha);
+    setTargetSha(baseSha);
+  }
+
+  const activeRepo = useMemo(() => repos.find((repo) => repo.repo_id === repoId) ?? null, [repos, repoId]);
+  const baseCommit = useMemo(() => commits.find((commit) => commit.sha === baseSha) ?? null, [commits, baseSha]);
+  const targetCommit = useMemo(() => commits.find((commit) => commit.sha === targetSha) ?? null, [commits, targetSha]);
+  const repoReady = activeRepo?.status === "ready";
+  const rangeReady = Boolean(baseSha && targetSha && baseSha !== targetSha);
+  const canCreate = Boolean(repoId && rangeReady) && !creating;
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-slate-900">仓库与变更</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          导入本地 Git 仓库，选择基线与变更提交，创建 changeset 后在详情页触发分析。
-        </p>
-      </header>
+    <div className="space-y-5">
+      <PageHeader
+        title="新建分析"
+        description="选仓库、定提交，直接生成变更影响与回归测试。"
+        actions={
+          <button
+            type="button"
+            onClick={() => void refreshRepos()}
+            disabled={reposLoading}
+            className="text-[11px] font-medium text-blue-700 underline decoration-blue-200 underline-offset-2 hover:text-blue-800 disabled:cursor-not-allowed disabled:text-slate-300"
+          >
+            {reposLoading ? "刷新中…" : "刷新仓库"}
+          </button>
+        }
+      />
 
       <ErrorBanner error={error} />
 
-      <Card title="导入仓库" description="仅接受本地 Git 仓库路径；非 Git 仓库将返回 not_a_git_repository。">
-        <form className="grid gap-3 md:grid-cols-[1fr_2fr_auto]" onSubmit={handleImport}>
-          <input
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
-            placeholder="仓库名称（留空取路径末段）"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-          <input
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
-            placeholder="var/samples/shop_api"
-            value={localPath}
-            onChange={(event) => setLocalPath(event.target.value)}
-            data-testid="repo-path-input"
-            required
-          />
-          <Button type="submit" disabled={importing} data-testid="repo-submit">
-            {importing ? "导入中…" : "导入"}
-          </Button>
-        </form>
-      </Card>
-
-      <Card
-        title="仓库列表"
-        actions={
-          <>
+      <section className="cp-panel overflow-hidden border-t-2 border-t-blue-600">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-[#f8fafc] px-5 py-2.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="text-[10px] font-medium tracking-[0.04em] text-slate-400">当前仓库</span>
+            <span className="truncate text-[13px] font-semibold text-slate-900">{activeRepo?.name ?? "未选择"}</span>
+            {activeRepo && <span className="cp-mono text-[10px] text-slate-500">{activeRepo.default_branch}</span>}
             {reposLoading && <Spinner />}
-            <Button variant="secondary" onClick={() => void refreshRepos()}>
-              刷新
+          </div>
+          <button
+            type="button"
+            onClick={() => setImportOpen((open) => !open)}
+            className="text-[11px] font-medium text-blue-700 hover:text-blue-800"
+          >
+            {importOpen ? "收起接入" : "接入本地仓库"}
+          </button>
+        </header>
+
+        {importOpen && (
+          <form
+            className="grid gap-2 border-b border-slate-200 bg-[#f8fafc] px-5 py-3 sm:grid-cols-[180px_minmax(0,1fr)_auto]"
+            onSubmit={handleImport}
+          >
+            <input
+              className="cp-input"
+              placeholder="仓库名称，可留空"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              aria-label="仓库名称"
+            />
+            <input
+              className="cp-input cp-mono"
+              placeholder="本地 Git 仓库路径，如 var/samples/shop_api"
+              value={localPath}
+              onChange={(event) => setLocalPath(event.target.value)}
+              data-testid="repo-path-input"
+              aria-label="仓库本地路径"
+              required
+            />
+            <Button type="submit" size="lg" disabled={importing} data-testid="repo-submit">
+              {importing ? "接入中…" : "接入"}
             </Button>
-          </>
-        }
-      >
-        {repos.length === 0 && !reposLoading ? (
-          <p className="text-sm text-slate-500">尚未导入仓库。</p>
-        ) : (
-          <ul className="divide-y divide-slate-100">
-            {repos.map((repo) => {
-              const active = repo.repo_id === repoId;
-              return (
-                <li key={repo.repo_id}>
-                  <button
-                    type="button"
-                    onClick={() => setRepoId(repo.repo_id)}
-                    className={`flex w-full flex-wrap items-center justify-between gap-2 px-2 py-2 text-left text-sm ${
-                      active ? "bg-slate-100" : "hover:bg-slate-50"
-                    }`}
-                  >
-                    <span className="font-medium text-slate-900">{repo.name}</span>
-                    <span className="font-mono text-xs text-slate-500">{repo.local_path}</span>
-                    <span className="flex items-center gap-2">
-                      <Badge tone="neutral">{repo.default_branch}</Badge>
-                      <Badge tone={repo.status === "ready" ? "green" : "neutral"}>{repo.status}</Badge>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          </form>
         )}
-      </Card>
 
-      <Card title="选择提交并创建 changeset" description="基线提交是新文件侧 diff 的对比起点。">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <span>当前仓库</span>
-            <span className="font-mono text-xs">{repoId || "未选择"}</span>
-            {commitsLoading && <Spinner label="加载提交…" />}
-          </div>
+        <div className="grid md:grid-cols-[228px_minmax(0,1fr)]">
+          <div className="border-b border-slate-200 bg-[#f8fafc] md:border-b-0 md:border-r">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2">
+              <span className="text-[11px] font-medium text-slate-500">本地仓库</span>
+              <span className="cp-mono text-[10px] text-slate-400">{repos.length}</span>
+            </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="text-sm">
-              <span className="mb-1 block text-slate-600">基线提交（base）</span>
-              <input
-                className="w-full rounded-md border border-slate-300 px-3 py-1.5 font-mono text-xs"
-                placeholder="完整 sha，可从下拉候选选择"
-                value={baseSha}
-                onChange={(event) => setBaseSha(event.target.value.trim())}
-                list="commit-options"
-                data-testid="commit-base"
-              />
-            </label>
-            <label className="text-sm">
-              <span className="mb-1 block text-slate-600">变更提交（target）</span>
-              <input
-                className="w-full rounded-md border border-slate-300 px-3 py-1.5 font-mono text-xs"
-                placeholder="完整 sha，可从下拉候选选择"
-                value={targetSha}
-                onChange={(event) => setTargetSha(event.target.value.trim())}
-                list="commit-options"
-                data-testid="commit-target"
-              />
-            </label>
-          </div>
-
-          <datalist id="commit-options">
-            {commits.map((commit) => (
-              <option key={commit.sha} value={commit.sha}>
-                {commit.short_sha} · {commit.message}
-              </option>
-            ))}
-          </datalist>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={() => void handleCreate()} disabled={!canCreate} data-testid="changeset-create">
-              {creating ? "创建中…" : "创建 changeset"}
-            </Button>
-            {!commitsLoading && commits.length < 2 && (
-              <span className="text-xs text-slate-500">
-                提交候选仅覆盖当前分支历史；可填入其他分支的完整 sha（如 eval/samples/lock.json 中的 sha）。
-              </span>
+            {repos.length === 0 && !reposLoading ? (
+              <div className="px-4 py-4">
+                <p className="text-[12px] font-medium text-slate-700">还没有仓库</p>
+                <p className="mt-1 text-[11px] leading-5 text-slate-500">接入一个本地 Git 仓库后开始。</p>
+                <button
+                  type="button"
+                  onClick={() => setImportOpen(true)}
+                  className="mt-2 text-[11px] font-medium text-blue-700 hover:underline"
+                >
+                  接入本地仓库
+                </button>
+              </div>
+            ) : (
+              <div>
+                {repos.map((repo) => {
+                  const active = repo.repo_id === repoId;
+                  const ready = repo.status === "ready";
+                  return (
+                    <button
+                      key={repo.repo_id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setRepoId(repo.repo_id)}
+                      className={`block w-full border-b border-slate-200 px-4 py-3 text-left last:border-b-0 ${
+                        active ? "bg-blue-50/60 shadow-[inset_3px_0_0_#2563eb]" : "hover:bg-white/70"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`truncate text-[12px] ${active ? "font-semibold text-slate-950" : "font-medium text-slate-700"}`}>
+                          {repo.name}
+                        </span>
+                        <span className={`text-[10px] ${ready ? "text-emerald-700" : "text-amber-700"}`}>
+                          {ready ? "就绪" : repo.status}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[10px] text-slate-400">
+                        <span className="cp-mono shrink-0">{repo.default_branch}</span>
+                        <span className="truncate">{repo.local_path}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
+
+          <div className="min-w-0 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[13px] font-semibold text-slate-900">提交范围</h2>
+                {commitsLoading && <Spinner label="加载提交…" />}
+              </div>
+              <button
+                type="button"
+                onClick={handleSwap}
+                disabled={!baseSha || !targetSha}
+                className="text-[11px] text-blue-700 hover:text-blue-800 disabled:cursor-not-allowed disabled:text-slate-300"
+              >
+                交换基线 / 变更
+              </button>
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <CommitBox
+                label="基线提交"
+                annotation="对比起点"
+                inputId="commit-base"
+                testId="commit-base"
+                tone="blue"
+                sha={baseSha}
+                commit={baseCommit}
+                onChange={setBaseSha}
+              />
+              <CommitBox
+                label="变更提交"
+                annotation="被分析版本"
+                inputId="commit-target"
+                testId="commit-target"
+                tone="green"
+                sha={targetSha}
+                commit={targetCommit}
+                onChange={setTargetSha}
+              />
+            </div>
+
+            <datalist id="commit-options">
+              {commits.map((commit) => (
+                <option key={commit.sha} value={commit.sha}>
+                  {commit.short_sha} · {commit.message}
+                </option>
+              ))}
+            </datalist>
+
+            <p className="mt-3 text-[10px] leading-4 text-slate-400">
+              候选提交来自当前分支；也可以直接填入完整 SHA。
+            </p>
+          </div>
         </div>
-      </Card>
+
+        <footer className="flex flex-col gap-3 border-t border-slate-200 bg-[#fbfcfe] px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <Status tone={repoReady ? "green" : "gray"}>{repoReady ? "仓库就绪" : "仓库未就绪"}</Status>
+            <Status tone={rangeReady ? "green" : "gray"}>{rangeReady ? "范围有效" : "需要两个不同提交"}</Status>
+          </div>
+          <div className="flex items-center justify-between gap-4 sm:justify-end">
+            <span className="text-[10px] text-slate-400">本地执行 · 约 1–3 分钟</span>
+            <Button
+              size="lg"
+              className="min-w-[120px]"
+              onClick={() => void handleCreate()}
+              disabled={!canCreate}
+              data-testid="changeset-create"
+            >
+              {creating ? "创建中…" : "创建分析"}
+            </Button>
+          </div>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function CommitBox({
+  label,
+  annotation,
+  inputId,
+  testId,
+  tone,
+  sha,
+  commit,
+  onChange,
+}: {
+  label: string;
+  annotation: string;
+  inputId: string;
+  testId: string;
+  tone: "blue" | "green";
+  sha: string;
+  commit: CommitOut | null;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div
+      className={`rounded-[4px] border border-t-2 border-slate-300 bg-white focus-within:border-blue-500 ${
+        tone === "blue" ? "border-t-blue-500" : "border-t-emerald-500"
+      }`}
+    >
+      <div className="flex items-center justify-between border-b border-slate-200 px-3 py-1.5">
+        <label
+          htmlFor={inputId}
+          className={`text-[10px] font-medium ${tone === "blue" ? "text-blue-700" : "text-emerald-700"}`}
+        >
+          {label}
+        </label>
+        <span className="cp-mono text-[10px] text-slate-400">{sha ? shortSha(sha) : annotation}</span>
+      </div>
+      <input
+        id={inputId}
+        className="cp-mono h-10 w-full border-0 bg-transparent px-3 text-[11px] text-slate-900 outline-none placeholder:text-slate-400"
+        placeholder="完整 SHA"
+        value={sha}
+        onChange={(event) => onChange(event.target.value.trim())}
+        list="commit-options"
+        data-testid={testId}
+      />
+      <div className="min-h-[46px] border-t border-slate-100 bg-[#fbfcfd] px-3 py-1.5">
+        {commit ? (
+          <>
+            <p className="truncate text-[11px] text-slate-700">{commit.message}</p>
+            <p className="mt-0.5 text-[10px] text-slate-400">
+              {commit.author} · {formatCommitTime(commit.committed_at)}
+            </p>
+          </>
+        ) : (
+          <p className="pt-1 text-[10px] text-slate-400">{sha ? "不在候选列表，按输入 SHA 使用" : "选择候选或直接输入完整 SHA"}</p>
+        )}
+      </div>
     </div>
   );
 }

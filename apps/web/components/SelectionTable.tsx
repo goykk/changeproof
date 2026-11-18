@@ -1,42 +1,44 @@
-import { Badge, type BadgeTone } from "@/components/ui";
 import type { SelectionItemOut } from "@/lib/types";
 
-const REASON_TONES: Record<string, BadgeTone> = {
-  covered_change: "green",
-  covered_impact: "green",
-  static_dependency: "blue",
-  high_risk_guard: "purple",
+const REASON_LABELS: Record<string, string> = {
+  covered_change: "覆盖变更",
+  covered_impact: "覆盖影响",
+  static_dependency: "静态依赖",
+  high_risk_guard: "高风险",
 };
 
 export function SelectionTable({ items }: { items: SelectionItemOut[] }) {
   if (items.length === 0) {
-    return <p className="text-sm text-slate-500">暂无测试选择结果。</p>;
+    return <p className="text-[12px] text-slate-500">暂无测试选择结果。</p>;
   }
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full text-sm">
+      <table className="w-full min-w-[620px] table-fixed">
+        <colgroup>
+          <col className="w-[50%]" />
+          <col className="w-[10%]" />
+          <col className="w-[40%]" />
+        </colgroup>
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-            <th className="px-3 py-2">测试节点</th>
-            <th className="px-3 py-2">策略</th>
-            <th className="px-3 py-2">选择理由</th>
+          <tr>
+            <th className="cp-th">测试节点</th>
+            <th className="cp-th">策略</th>
+            <th className="cp-th">选择理由</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr key={item.test_node_id} className="border-b border-slate-100 align-top">
-              <td className="px-3 py-2 font-mono text-xs text-slate-800">{item.test_node_id}</td>
-              <td className="px-3 py-2">
-                <Badge tone="neutral">{item.strategy}</Badge>
-              </td>
-              <td className="px-3 py-2">
+            <tr key={item.test_node_id}>
+              <td className="cp-td cp-mono break-all text-slate-900">{item.test_node_id}</td>
+              <td className="cp-td"><span className="text-blue-700">{item.strategy}</span></td>
+              <td className="cp-td">
                 <ul className="space-y-1">
                   {item.reasons.map((reason, index) => (
-                    <li key={`${reason.source}-${reason.ref_id ?? index}`} className="flex flex-wrap items-center gap-1">
-                      <Badge tone={REASON_TONES[reason.source] ?? "neutral"}>{reason.source}</Badge>
-                      <span className="text-slate-700">{reason.detail}</span>
-                      {reason.ref_id && <span className="font-mono text-xs text-slate-400">{reason.ref_id}</span>}
+                    <li key={`${reason.source}-${reason.ref_id ?? index}`} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                      <span className="text-[10px] font-medium text-slate-500">{REASON_LABELS[reason.source] ?? reason.source}</span>
+                      <span className="text-[11px] text-slate-600">{reason.detail}</span>
+                      {reason.ref_id && <span className="cp-mono text-[10px] text-slate-400">{reason.ref_id}</span>}
                     </li>
                   ))}
                 </ul>

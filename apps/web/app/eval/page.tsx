@@ -1,11 +1,18 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { Badge, Card } from "@/components/ui";
+import { Badge, Card, Metric, PageHeader } from "@/components/ui";
 import type { StrategyReport } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 const STRATEGY_ORDER = ["full", "neighbor", "static", "coverage", "combo"];
+const STRATEGY_LABELS: Record<string, string> = {
+  full: "全量测试",
+  neighbor: "邻域传播",
+  static: "静态依赖",
+  coverage: "覆盖回溯",
+  combo: "组合策略",
+};
 
 function evalDirCandidates(): string[] {
   const candidates = [
@@ -29,7 +36,6 @@ async function loadReports(): Promise<{ dir: string | null; reports: StrategyRep
       const reports: StrategyReport[] = [];
       for (const file of files.sort()) {
         const parsed = JSON.parse(await fs.readFile(path.join(dir, file), "utf-8")) as StrategyReport;
-        // summary.json 等汇总文件不含 strategy/per_sample，必须跳过，避免渲染期异常。
         if (!parsed || typeof parsed.strategy !== "string" || !Array.isArray(parsed.per_sample)) {
           continue;
         }
@@ -52,88 +58,98 @@ function percent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-function MetricBar({ value, tone }: { value: number; tone: string }) {
-  const width = Math.min(100, Math.max(0, Math.round(value * 100)));
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
-        <div className={`h-full rounded-full ${tone}`} style={{ width: `${width}%` }} />
-      </div>
-      <span className="font-mono text-xs text-slate-600">{percent(value)}</span>
-    </div>
-  );
+function formatTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 export default async function EvalPage() {
   const { dir, reports, missing } = await loadReports();
+  const combo = reports.find((report) => report.strategy === "combo") ?? null;
+  const generatedAt = reports[0]?.generated_at;
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-slate-900">策略评测</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          读取 <code className="font-mono text-xs">var/eval/*.json</code>，对比 full / neighbor / static / coverage / combo 五策略。
-        </p>
-        {dir && <p className="mt-1 font-mono text-xs text-slate-400">{dir}</p>}
-      </header>
+    <div className="space-y-5">
+      <PageHeader
+        title="策略评测"
+        description="以未检出回归为主口径，对比五种测试选择策略。"
+        meta={<span className="cp-mono text-[10px] text-slate-400">{dir ?? "未找到评测目录"}</span>}
+      />
 
       {missing ? (
         <Card title="暂无评测结果">
-          <p className="text-sm text-slate-500">
-            未找到 <code className="font-mono text-xs">var/eval/*.json</code>，请先运行评测脚本生成结果。
-          </p>
+          <p className="text-[12px] text-slate-500">未找到 var/eval/*.json，请先运行评测脚本生成结果。</p>
         </Card>
       ) : (
         <>
-          <Card title="策略对比" description="统一口径指标：recall@20、regression_recall、中位测试数降幅、verified_rate。">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                    <th className="px-3 py-2">策略</th>
-                    <th className="px-3 py-2">样本数</th>
-                    <th className="px-3 py-2">recall@20</th>
-                    <th className="px-3 py-2">regression_recall</th>
-                    <th className="px-3 py-2">中位测试数降幅</th>
-                    <th className="px-3 py-2">verified_rate</th>
-                    <th className="px-3 py-2">生成时间</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reports.map((report) => (
-                    <tr key={report.strategy} className="border-b border-slate-100 align-middle">
-                      <td className="px-3 py-2">
-                        <Badge tone="blue">{report.strategy}</Badge>
+          <section className="cp-panel flex flex-wrap items-center gap-x-7 gap-y-2 border-t-2 border-t-blue-500 px-5 py-3">
+            <Metric label="策略" value={reports.length} />
+            <Metric label="样本" value={reports[0]?.samples_total ?? 0} />
+            {combo && <Metric label="combo recall" value={percent(combo.recall_at_20)} tone="blue" />}
+            {combo && <Metric label="combo 回归" value={percent(combo.regression_recall)} tone="green" />}
+            {generatedAt && <span className="cp-mono ml-auto text-[10px] text-slate-400">最近生成 {formatTime(generatedAt)}</span>}
+          </section>
+
+          <Card
+            title="策略对比"
+            actions={<span className="cp-mono text-[10px] text-slate-400">{reports.length} 种策略</span>}
+            flush
+            bodyClassName="overflow-x-auto"
+          >
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className="cp-th">策略</th>
+                  <th className="cp-th text-right">样本</th>
+                  <th className="cp-th text-right">recall@20</th>
+                  <th className="cp-th text-right">regression_recall</th>
+                  <th className="cp-th text-right">测试数降幅</th>
+                  <th className="cp-th text-right">verified_rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((report) => {
+                  const isDefault = report.strategy === combo?.strategy;
+                  return (
+                    <tr key={report.strategy} className={isDefault ? "bg-blue-50/40 shadow-[inset_3px_0_0_#2563eb]" : ""}>
+                      <td className="cp-td">
+                        <div className="flex items-baseline gap-2">
+                          <span className={`cp-mono text-[11px] ${isDefault ? "font-semibold text-slate-950" : "text-slate-800"}`}>
+                            {report.strategy}
+                          </span>
+                          <span className="text-[10px] text-slate-400">{STRATEGY_LABELS[report.strategy] ?? "自定义"}</span>
+                          {isDefault && <Badge tone="blue">默认</Badge>}
+                        </div>
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs">{report.samples_total}</td>
-                      <td className="px-3 py-2">
-                        <MetricBar value={report.recall_at_20} tone="bg-blue-500" />
-                      </td>
-                      <td className="px-3 py-2">
-                        <MetricBar value={report.regression_recall} tone="bg-green-500" />
-                      </td>
-                      <td className="px-3 py-2">
-                        <MetricBar value={report.median_test_count_reduction} tone="bg-purple-500" />
-                      </td>
-                      <td className="px-3 py-2">
-                        <MetricBar value={report.verified_rate} tone="bg-orange-500" />
-                      </td>
-                      <td className="px-3 py-2 font-mono text-xs text-slate-500">{report.generated_at}</td>
+                      <td className="cp-td cp-mono text-right">{report.samples_total}</td>
+                      <td className="cp-td cp-mono text-right text-blue-700">{percent(report.recall_at_20)}</td>
+                      <td className="cp-td cp-mono text-right text-emerald-700">{percent(report.regression_recall)}</td>
+                      <td className="cp-td cp-mono text-right text-amber-700">{percent(report.median_test_count_reduction)}</td>
+                      <td className="cp-td cp-mono text-right text-slate-600">{percent(report.verified_rate)}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+              </tbody>
+            </table>
           </Card>
 
-          <Card title="逐样本明细">
-            <div className="space-y-3">
+          <Card title="逐样本明细" description={`${reports.reduce((sum, report) => sum + report.per_sample.length, 0)} 条记录`}>
+            <div className="divide-y divide-slate-100">
               {reports.map((report) => (
-                <details key={report.strategy} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                  <summary className="cursor-pointer text-sm font-medium text-slate-800">
-                    {report.strategy} · {report.per_sample.length} 个样本
+                <details key={report.strategy} className="group py-2">
+                  <summary className="flex cursor-pointer select-none flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                    <span className="cp-mono font-medium text-slate-900">{report.strategy}</span>
+                    <span className="text-slate-400">{report.per_sample.length} 个样本</span>
+                    <span className="text-slate-400">生成于 {formatTime(report.generated_at)}</span>
                   </summary>
-                  <pre className="mt-2 max-h-72 overflow-auto rounded-md bg-slate-900 p-3 text-xs text-slate-100">
+                  <pre className="mt-2 max-h-72 overflow-auto rounded-[4px] border border-slate-200 bg-[#f8fafc] px-3 py-2 text-[10px] leading-5 text-slate-600">
                     {JSON.stringify(report.per_sample, null, 2)}
                   </pre>
                 </details>
